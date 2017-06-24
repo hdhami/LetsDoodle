@@ -21,8 +21,8 @@
     function draw(e) {
         if (!isActive) return;
 
-        var x = e.offsetX || e.layerX - canvas.offsetLeft;
-        var y = e.offsetY || e.layerY - canvas.offsetTop;
+        var x = e.offsetX ;
+        var y = e.offsetY ;
 
         plots.push({
             x: x,
