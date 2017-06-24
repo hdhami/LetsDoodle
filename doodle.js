@@ -1,15 +1,22 @@
-(function() {
+(function(pubnub, channel) {
+    var isActive = false;
+    var plots = [];
     var canvas = document.getElementById('letsDoodle');
+    /*setting for canvas*/
     var ctx = canvas.getContext('2d');
-    ctx.lineWidth = '2';
+    ctx.lineWidth = 2;
+    /*event binding on canvas node*/
     canvas.addEventListener('mousedown', startDraw, false);
     canvas.addEventListener('mousemove', draw, false);
     canvas.addEventListener('mouseup', endDraw, false);
 
+    /*mousedown start*/
+    function startDraw(e) {
+        isActive = true;
+    }
+    /*mouse down end*/
 
-
-    var isActive = false;
-    var plots = [];
+    /*mouse move start*/
 
     function draw(e) {
         if (!isActive) return;
@@ -35,10 +42,9 @@
         }
         ctx.stroke();
     }
+    /*mouse move end*/
 
-    function startDraw(e) {
-        isActive = true;
-    }
+    /*mouse up start*/
 
     function endDraw(e) {
         isActive = false;
@@ -51,7 +57,10 @@
         plots = [];
     }
 
+    /*mouse up end*/
 
+
+    /*draw from stream*/
 
     function drawFromStream(message) {
         //debugger
@@ -64,5 +73,6 @@
         channel: channel,
         callback: drawFromStream
     });
+    /*************/
 
-})()
+})(pubnub, channel);
