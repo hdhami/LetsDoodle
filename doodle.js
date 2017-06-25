@@ -1,6 +1,37 @@
-(function(pubnub, channel) {
+(function(WebSocket) {
+    
+    var data = {};
+    var userId;
+    var connection = new WebSocket('ws://localhost:'+window.wsServerPort);
+
+    connection.onopen = function() {
+        // connection is opened and ready to use
+        userId = 'user' + Math.floor((Math.random() * 100));
+        data[userId] = [];
+        
+    };
+
+    connection.onerror = function(error) {        
+    };
+
+    connection.onmessage = function(message) {
+        //decode json received from server
+        var resp;
+        try {
+            resp = JSON.parse(message.data);
+        } catch (e) {
+            console.log('invalid json');
+            return;
+        }
+        if (!message) return;
+        ctx.beginPath();
+        drawOnCanvas(resp);
+    }
+    connection.onclose = function(message) {
+       connection.close();
+    }
+
     var isActive = false;
-    var plots = [];
     var canvas = document.getElementById('letsDoodle');
     /*setting for canvas*/
     var ctx = canvas.getContext('2d');
@@ -21,26 +52,34 @@
     function draw(e) {
         if (!isActive) return;
 
-        var x = e.offsetX ;
-        var y = e.offsetY ;
+        var x = e.offsetX;
+        var y = e.offsetY;
 
-        plots.push({
+        data[userId].push({
             x: x,
             y: y
         });
-        //debugger
-        drawOnCanvas(plots);
+        
+        drawOnCanvas(data);
+        // send the data to server
+        connection.send(JSON.stringify({
+            'userId': userId,
+            'userData': data[userId]
+        }));
     }
 
 
-    function drawOnCanvas(plots) {
+    function drawOnCanvas(usersData) {
         ctx.beginPath();
-        ctx.moveTo(plots[0].x, plots[0].y);
-
-        for (var i = 1; i < plots.length; i++) {
-            ctx.lineTo(plots[i].x, plots[i].y);
+        for (var key in usersData) {
+            var plots = usersData[key];
+            ctx.moveTo(plots[0].x, plots[0].y);
+            for (var i = 1; i < plots.length; i++) {
+                ctx.lineTo(plots[i].x, plots[i].y);
+            }
+            ctx.stroke();  
         }
-        ctx.stroke();
+              
     }
     /*mouse move end*/
 
@@ -48,31 +87,9 @@
 
     function endDraw(e) {
         isActive = false;
-        pubnub.publish({
-            channel: channel,
-            message: {
-                plots: plots
-            }
-        });
-        plots = [];
+        data[userId] = [];
     }
 
     /*mouse up end*/
 
-
-    /*draw from stream*/
-
-    function drawFromStream(message) {
-        //debugger
-        if (!message) return;
-
-        ctx.beginPath();
-        drawOnCanvas(message.plots);
-    }
-    pubnub.subscribe({
-        channel: channel,
-        callback: drawFromStream
-    });
-    /*************/
-
-})(pubnub, channel);
+})(window.WebSocket||window.MozWebSocket);
